@@ -65,8 +65,24 @@ std::vector<NativeFunction> GetHashFunctionRegistry() {
 
       HASH_SHA512_NULL_NEVER_FN(hashSHA512, {}),
 
-      HASH_MD5_NULL_NEVER_FN(hashMD5, {})};
-
+      NativeFunction("hash32_spark", {}, DataTypeVector{boolean(), int32()}, int32(),
+                 kResultNullNever, "hash32_spark_boolean_int32"),
+      NativeFunction("hash32_spark", {}, DataTypeVector{int8(), int32()}, int32(),
+                     kResultNullNever, "hash32_spark_int8_int32"),
+      NativeFunction("hash32_spark", {}, DataTypeVector{int16(), int32()}, int32(),
+                     kResultNullNever, "hash32_spark_int16_int32"),
+      NativeFunction("hash32_spark", {}, DataTypeVector{int32(), int32()}, int32(),
+                     kResultNullNever, "hash32_spark_int32_int32"),
+      NativeFunction("hash32_spark", {}, DataTypeVector{date32(), int32()}, int32(),
+                     kResultNullNever, "hash32_spark_date32_int32"),
+      NativeFunction("hash32_spark", {}, DataTypeVector{float32(), int32()}, int32(),
+                     kResultNullNever, "hash32_spark_float32_int32"),
+      NativeFunction("hash64_spark", {}, DataTypeVector{int64(), int32()}, int32(),
+                     kResultNullNever, "hash64_spark_int64_int32"),
+      NativeFunction("hash64_spark", {}, DataTypeVector{float64(), int32()}, int32(),
+                     kResultNullNever, "hash64_spark_float64_int32"),
+      NativeFunction("hashbuf_spark", {}, DataTypeVector{utf8(), int32()}, int32(),
+                     kResultNullNever, "hashbuf_spark_utf8_int32")};
   return hash_fn_registry_;
 }
 

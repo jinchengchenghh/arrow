@@ -76,6 +76,25 @@ gdv_int32 hash32_buf(const gdv_uint8* buf, int len, gdv_int32 seed);
 gdv_int64 hash64(double val, gdv_int64 seed);
 gdv_int64 hash64_buf(const gdv_uint8* buf, int len, gdv_int64 seed);
 
+gdv_int32 hash32_spark_boolean_int32(gdv_boolean val, gdv_boolean is_valid,
+                                     gdv_int32 seed, gdv_boolean seed_valid);
+gdv_int32 hash32_spark_int8_int32(gdv_int8 val, gdv_boolean is_valid, gdv_int32 seed,
+                                  gdv_boolean seed_valid);
+gdv_int32 hash32_spark_int16_int32(gdv_int16 val, gdv_boolean is_valid, gdv_int32 seed,
+                                   gdv_boolean seed_valid);
+gdv_int32 hash32_spark_int32_int32(gdv_int32 val, gdv_boolean is_valid, gdv_int32 seed,
+                                   gdv_boolean seed_valid);
+gdv_int32 hash32_spark_date32_int32(gdv_date32 val, gdv_boolean is_valid, gdv_int32 seed,
+                                    gdv_boolean seed_valid);
+gdv_int32 hash32_spark_float32_int32(gdv_float32 val, gdv_boolean is_valid,
+                                     gdv_int32 seed, gdv_boolean seed_valid);
+gdv_int32 hash64_spark_int64_int32(gdv_int64 val, gdv_boolean is_valid, gdv_int32 seed,
+                                   gdv_boolean seed_valid);
+gdv_int32 hash64_spark_float64_int32(gdv_float64 val, gdv_boolean is_valid,
+                                     gdv_int32 seed, gdv_boolean seed_valid);
+gdv_int32 hashbuf_spark_utf8_int32(const gdv_uint8* buf, int len, gdv_boolean is_valid,
+                                   gdv_int32 seed, gdv_boolean seed_valid);
+
 gdv_int32 timestampdiffMonth_timestamp_timestamp(gdv_timestamp, gdv_timestamp);
 
 gdv_int64 timestampaddSecond_int32_timestamp(gdv_int32, gdv_timestamp);
