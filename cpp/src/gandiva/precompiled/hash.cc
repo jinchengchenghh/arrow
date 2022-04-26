@@ -121,6 +121,212 @@ FORCE_INLINE gdv_int32 hash32(double val, gdv_int32 seed) {
   return murmur3_32(double_to_long_bits(val), seed);
 }
 
+static inline gdv_uint32 float_to_int_bits(float value) {
+  gdv_uint32 result;
+  memcpy(&result, &value, sizeof(result));
+  return result;
+}
+
+static inline gdv_int32 murmur3_spark_32(gdv_int32 val, gdv_int32 seed) {
+  // gdv_int32 c1 = 0xcc9e2d51;
+  // gdv_int32 c2 = 0x1b873593;
+
+  int length = 4;
+  gdv_uint64 c1 = 0xcc9e2d51ull;
+  gdv_uint64 c2 = 0x1b873593ull;
+  static gdv_uint64 UINT_MASK = 0xffffffffull;
+  gdv_uint64 lh1 = seed & UINT_MASK;
+  gdv_uint64 lk1 = val & UINT_MASK;
+
+  // gdv_int32 lk1 = val;
+  // gdv_int32 lh1 = seed;
+
+  lk1 *= c1;
+  lk1 &= UINT_MASK;
+  lk1 = ((lk1 << 15) & UINT_MASK) | (lk1 >> 17);
+  lk1 *= c2;
+  lk1 &= UINT_MASK;
+  // done mixK1
+
+  lh1 ^= lk1;
+  lh1 = ((lh1 << 13) & UINT_MASK) | (lh1 >> 19);
+  lh1 = lh1 * 5 + 0xe6546b64L;
+  lh1 = UINT_MASK & lh1;
+  // done mixH1
+
+  lh1 ^= length;
+  lh1 ^= lh1 >> 16;
+  lh1 *= 0x85ebca6bull;
+  lh1 = UINT_MASK & lh1;
+  lh1 ^= lh1 >> 13;
+  lh1 *= 0xc2b2ae35ull;
+  lh1 = UINT_MASK & lh1;
+  lh1 ^= lh1 >> 16;
+  // done fmix
+
+  return static_cast<gdv_uint32>(lh1);
+}
+
+static inline gdv_int32 murmur3_spark_64(gdv_int64 val, gdv_int32 seed) {
+  gdv_uint64 c1 = 0xcc9e2d51ull;
+  gdv_uint64 c2 = 0x1b873593ull;
+  int length = 8;
+  static gdv_uint64 UINT_MASK = 0xffffffffull;
+  gdv_uint64 lh1 = seed & UINT_MASK;
+  for (int i = 0; i < 2; i++) {
+    gdv_uint64 lk1 = ((val >> i * 32) & UINT_MASK);
+    lk1 *= c1;
+    lk1 &= UINT_MASK;
+
+    lk1 = ((lk1 << 15) & UINT_MASK) | (lk1 >> 17);
+
+    lk1 *= c2;
+    lk1 &= UINT_MASK;
+
+    lh1 ^= lk1;
+    lh1 = ((lh1 << 13) & UINT_MASK) | (lh1 >> 19);
+
+    lh1 = lh1 * 5 + 0xe6546b64L;
+    lh1 = UINT_MASK & lh1;
+  }
+  lh1 ^= length;
+
+  lh1 ^= lh1 >> 16;
+  lh1 *= 0x85ebca6bull;
+  lh1 = UINT_MASK & lh1;
+  lh1 ^= lh1 >> 13;
+  lh1 *= 0xc2b2ae35ull;
+  lh1 = UINT_MASK & lh1;
+  lh1 ^= lh1 >> 16;
+
+  return static_cast<gdv_int32>(lh1);
+}
+
+static gdv_uint32 murmur3_32_buf_spark(const gdv_uint8* key, gdv_int32 len,
+                                       gdv_int32 seed) {
+  static const gdv_uint64 c1 = 0xcc9e2d51ull;
+  static const gdv_uint64 c2 = 0x1b873593ull;
+  static const gdv_uint64 UINT_MASK = 0xffffffffull;
+  gdv_uint64 lh1 = seed & UINT_MASK;
+  const gdv_uint32* blocks = reinterpret_cast<const gdv_uint32*>(key);
+  int nblocks = len / 4;
+  int tail_len = len - nblocks * 4;
+  const gdv_uint8* tail = reinterpret_cast<const gdv_uint8*>(key + nblocks * 4);
+  for (int i = 0; i < nblocks; i++) {
+    gdv_uint64 lk1 = static_cast<gdv_uint64>(blocks[i]);
+
+    // k1 *= c1;
+    lk1 *= c1;
+    lk1 &= UINT_MASK;
+
+    lk1 = ((lk1 << 15) & UINT_MASK) | (lk1 >> 17);
+
+    lk1 *= c2;
+    lk1 = lk1 & UINT_MASK;
+    lh1 ^= lk1;
+    lh1 = ((lh1 << 13) & UINT_MASK) | (lh1 >> 19);
+
+    lh1 = lh1 * 5 + 0xe6546b64ull;
+    lh1 = UINT_MASK & lh1;
+  }
+
+  // tail
+  gdv_uint64 lk1 = 0;
+
+  for (int i = 0; i < tail_len; i++) {
+    lk1 = static_cast<gdv_uint64>(tail[i]);
+
+    lk1 *= c1;
+    lk1 &= UINT_MASK;
+
+    lk1 = ((lk1 << 15) & UINT_MASK) | (lk1 >> 17);
+
+    lk1 *= c2;
+    lk1 = lk1 & UINT_MASK;
+    lh1 ^= lk1;
+    lh1 = ((lh1 << 13) & UINT_MASK) | (lh1 >> 19);
+
+    lh1 = lh1 * 5 + 0xe6546b64ull;
+    lh1 = UINT_MASK & lh1;
+  }
+
+  // finalization
+  lh1 ^= len;
+
+  lh1 ^= lh1 >> 16;
+  lh1 *= 0x85ebca6bull;
+  lh1 = UINT_MASK & lh1;
+  lh1 ^= lh1 >> 13;
+
+  lh1 *= 0xc2b2ae35ull;
+  lh1 = UINT_MASK & lh1;
+  lh1 ^= lh1 >> 16;
+
+  return static_cast<gdv_uint32>(lh1 & UINT_MASK);
+}
+
+FORCE_INLINE gdv_int32 hash32_spark_boolean_int32(gdv_boolean val, gdv_boolean is_valid,
+                                                  gdv_int32 seed,
+                                                  gdv_boolean seed_isvalid) {
+  if (!is_valid) return seed;
+  return murmur3_spark_32(static_cast<int32_t>(val), seed);
+}
+
+FORCE_INLINE gdv_int32 hash32_spark_int8_int32(gdv_int8 val, gdv_boolean is_valid,
+                                               gdv_int32 seed, gdv_boolean seed_isvalid) {
+  if (!is_valid) return seed;
+  return murmur3_spark_32(static_cast<int32_t>(val), seed);
+}
+
+FORCE_INLINE gdv_int32 hash32_spark_int16_int32(gdv_int16 val, gdv_boolean is_valid,
+                                                gdv_int32 seed,
+                                                gdv_boolean seed_isvalid) {
+  if (!is_valid) return seed;
+  return murmur3_spark_32(static_cast<int32_t>(val), seed);
+}
+
+FORCE_INLINE gdv_int32 hash32_spark_float32_int32(gdv_float32 val, gdv_boolean is_valid,
+                                                  gdv_int32 seed,
+                                                  gdv_boolean seed_isvalid) {
+  if (!is_valid) return seed;
+  return murmur3_spark_32(float_to_int_bits(val), seed);
+}
+
+FORCE_INLINE gdv_int32 hash32_spark_int32_int32(gdv_int32 val, gdv_boolean is_valid,
+                                                gdv_int32 seed,
+                                                gdv_boolean seed_isvalid) {
+  if (!is_valid) return seed;
+  return murmur3_spark_32(val, seed);
+}
+
+FORCE_INLINE gdv_int32 hash32_spark_date32_int32(gdv_date32 val, gdv_boolean is_valid,
+                                                 gdv_int32 seed,
+                                                 gdv_boolean seed_isvalid) {
+  if (!is_valid) return seed;
+  return murmur3_spark_32(static_cast<int32_t>(val), seed);
+}
+
+FORCE_INLINE gdv_int32 hash64_spark_float64_int32(gdv_float64 val, gdv_boolean is_valid,
+                                                  gdv_int32 seed,
+                                                  gdv_boolean seed_isvalid) {
+  if (!is_valid) return seed;
+  return murmur3_spark_64(double_to_long_bits(val), seed);
+}
+
+FORCE_INLINE gdv_int32 hash64_spark_int64_int32(gdv_int64 val, gdv_boolean is_valid,
+                                                gdv_int32 seed,
+                                                gdv_boolean seed_isvalid) {
+  if (!is_valid) return seed;
+  return murmur3_spark_64(val, seed);
+}
+
+FORCE_INLINE gdv_int32 hashbuf_spark_utf8_int32(const gdv_uint8* buf, gdv_int32 len,
+                                                gdv_boolean is_valid, gdv_int32 seed,
+                                                gdv_boolean seed_valid) {
+  if (!is_valid) return seed;
+  return murmur3_32_buf_spark(reinterpret_cast<const uint8_t*>(buf), len, seed);
+}
+
 // Wrappers for all the numeric/data/time arrow types
 
 #define HASH64_WITH_SEED_OP(NAME, TYPE)                                        \
