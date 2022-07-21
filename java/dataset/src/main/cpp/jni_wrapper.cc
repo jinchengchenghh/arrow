@@ -502,7 +502,7 @@ Java_org_apache_arrow_dataset_file_JniWrapper_makeFileSystemDatasetFactory(
   arrow::dataset::FileSystemFactoryOptions options;
   std::shared_ptr<arrow::dataset::DatasetFactory> d =
       JniGetOrThrow(arrow::dataset::FileSystemDatasetFactory::Make(
-          JStringToCString(env, uri), file_format, options));
+          JStringToCString(env, uri), -1L, -1L, file_format, options));
   return CreateNativeRef(d);
   JNI_METHOD_END(-1L)
 }
