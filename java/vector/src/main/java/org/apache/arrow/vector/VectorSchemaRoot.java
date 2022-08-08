@@ -52,7 +52,7 @@ import org.apache.arrow.vector.util.TransferPair;
 public class VectorSchemaRoot implements AutoCloseable {
 
   private Schema schema;
-  private int rowCount;
+  protected int rowCount;
   private final List<FieldVector> fieldVectors;
   private final Map<Field, FieldVector> fieldVectorsMap = new LinkedHashMap<>();
 
