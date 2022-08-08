@@ -37,7 +37,7 @@ import org.apache.arrow.vector.types.pojo.Field;
  */
 public class VectorLoader {
 
-  private final VectorSchemaRoot root;
+  protected final VectorSchemaRoot root;
 
   private final CompressionCodec.Factory factory;
 
@@ -90,7 +90,7 @@ public class VectorLoader {
     }
   }
 
-  private void loadBuffers(
+  protected void loadBuffers(
       FieldVector vector,
       Field field,
       Iterator<ArrowBuf> buffers,
