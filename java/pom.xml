@@ -1101,7 +1101,8 @@
                     -DARROW_JSON=${ARROW_DATASET}
                     -DARROW_ORC=${ARROW_ORC}
                     -DARROW_PARQUET=${ARROW_PARQUET}
-                    -DARROW_S3=ON
+                    -DARROW_S3=OFF
+                    -DARROW_HDFS=ON
                     -DARROW_SUBSTRAIT=${ARROW_DATASET}
                     -DARROW_USE_CCACHE=ON
                     -DCMAKE_BUILD_TYPE=Release
