@@ -51,9 +51,8 @@
   </properties>
 
   <scm>
-    <connection>scm:git:https://github.com/apache/arrow.git</connection>
-    <developerConnection>scm:git:https://github.com/apache/arrow.git</developerConnection>
-    <url>https://github.com/apache/arrow</url>
+   <url>https://github.com/jinchengchenghh/arrow</url>
+    <connection>scm:git:https://github.com/jinchengchenghh/arrow</connection>
     <tag>apache-arrow-2.0.0</tag>
   </scm>
 
@@ -1294,6 +1293,66 @@
         </plugins>
       </build>
     </profile>
+    <profile>
+      <id>release</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-gpg-plugin</artifactId>
+            <version>1.6</version>
+            <executions>
+              <execution>
+                <id>sign-artifacts</id>
+                <phase>verify</phase>
+                <goals>
+                  <goal>sign</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.sonatype.plugins</groupId>
+            <artifactId>nexus-staging-maven-plugin</artifactId>
+            <version>1.6.7</version>
+            <extensions>true</extensions>
+            <configuration>
+              <nexusUrl>https://s01.oss.sonatype.org/</nexusUrl>
+              <serverId>ossrh</serverId>
+              <autoReleaseAfterClose>true</autoReleaseAfterClose>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
   </profiles>
+
+  <developers>
+    <developer>
+      <id>intel</id>
+      <name>Chengcheng Jin</name>
+      <email>chengcheng.jin@intel.com</email>
+      <organization>Intel</organization>
+      <timezone>America/Los_Angeles</timezone>
+    </developer>
+  </developers>
+
+  <licenses>
+    <license>
+      <name>The Apache License, Version 2.0</name>
+      <url>https://www.apache.org/licenses/LICENSE-2.0</url>
+    </license>
+  </licenses>
+
+  <distributionManagement>
+    <snapshotRepository>
+      <id>ossrh</id>
+      <url>https://s01.oss.sonatype.org/content/repositories/snapshots</url>
+    </snapshotRepository>
+    <repository>
+      <id>ossrh</id>
+      <url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+    </repository>
+  </distributionManagement>
 
 </project>
