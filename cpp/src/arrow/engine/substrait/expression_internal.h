@@ -61,5 +61,9 @@ ARROW_ENGINE_EXPORT
 Result<SubstraitCall> FromProto(const substrait::AggregateFunction&, bool is_hash,
                                 const ExtensionSet&, const ConversionOptions&);
 
+ARROW_ENGINE_EXPORT
+Status FromProto(const substrait::Expression::Literal& literal,
+                 std::unordered_map<std::string, std::string>& out);
+
 }  // namespace engine
 }  // namespace arrow

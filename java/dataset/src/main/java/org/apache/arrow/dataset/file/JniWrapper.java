@@ -17,6 +17,8 @@
 
 package org.apache.arrow.dataset.file;
 
+import java.nio.ByteBuffer;
+
 import org.apache.arrow.dataset.jni.JniLoader;
 
 /**
@@ -43,7 +45,8 @@ public class JniWrapper {
    * @return the native pointer of the arrow::dataset::FileSystemDatasetFactory instance.
    * @see FileFormat
    */
-  public native long makeFileSystemDatasetFactory(String uri, int fileFormat);
+  public native long makeFileSystemDatasetFactory(String uri, int fileFormat,
+                                                  ByteBuffer serializedFragmentScanOptions);
 
   /**
    * Create FileSystemDatasetFactory and return its native pointer. The pointer is pointing to a
@@ -54,7 +57,8 @@ public class JniWrapper {
    * @return the native pointer of the arrow::dataset::FileSystemDatasetFactory instance.
    * @see FileFormat
    */
-  public native long makeFileSystemDatasetFactory(String[] uris, int fileFormat);
+  public native long makeFileSystemDatasetFactoryWithFiles(String[] uris, int fileFormat,
+                                                  ByteBuffer serializedFragmentScanOptions);
 
   /**
    * Write the content in a {@link org.apache.arrow.c.ArrowArrayStream} into files. This internally

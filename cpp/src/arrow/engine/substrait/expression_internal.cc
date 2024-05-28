@@ -1337,5 +1337,17 @@ Result<std::unique_ptr<substrait::Expression>> ToProto(
   return std::move(out);
 }
 
+Status FromProto(const substrait::Expression::Literal& literal,
+                 std::unordered_map<std::string, std::string>& out) {
+  ARROW_RETURN_IF(!literal.has_map(), Status::Invalid("Literal does not have a map."));
+  auto literalMap = literal.map();
+  auto size = literalMap.key_values_size();
+  for (auto i = 0; i < size; i++) {
+    substrait::Expression_Literal_Map_KeyValue keyValue = literalMap.key_values(i);
+    out.emplace(keyValue.key().string(), keyValue.value().string());
+  }
+  return Status::OK();
+}
+
 }  // namespace engine
 }  // namespace arrow

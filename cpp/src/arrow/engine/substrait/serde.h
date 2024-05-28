@@ -23,6 +23,7 @@
 #include <memory>
 #include <string>
 #include <string_view>
+#include <unordered_map>
 #include <vector>
 
 #include "arrow/compute/type_fwd.h"
@@ -182,6 +183,9 @@ ARROW_ENGINE_EXPORT Result<BoundExpressions> DeserializeExpressions(
     const Buffer& buf, const ExtensionIdRegistry* registry = NULLPTR,
     const ConversionOptions& conversion_options = {},
     ExtensionSet* ext_set_out = NULLPTR);
+
+ARROW_ENGINE_EXPORT Status
+DeserializeMap(const Buffer& buf, std::unordered_map<std::string, std::string>& out);
 
 /// \brief Deserializes a Substrait Type message to the corresponding Arrow type
 ///

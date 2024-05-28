@@ -85,6 +85,9 @@ class ARROW_DS_EXPORT CsvFileFormat : public FileFormat {
 struct ARROW_DS_EXPORT CsvFragmentScanOptions : public FragmentScanOptions {
   std::string type_name() const override { return kCsvTypeName; }
 
+  static Result<std::shared_ptr<FragmentScanOptions>> from(
+      const std::unordered_map<std::string, std::string>& configs);
+
   using StreamWrapFunc = std::function<Result<std::shared_ptr<io::InputStream>>(
       std::shared_ptr<io::InputStream>)>;
 

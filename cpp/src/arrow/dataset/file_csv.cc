@@ -24,6 +24,7 @@
 #include <unordered_set>
 #include <utility>
 
+#include "arrow/c/bridge.h"
 #include "arrow/csv/options.h"
 #include "arrow/csv/parser.h"
 #include "arrow/csv/reader.h"
@@ -52,6 +53,9 @@ using internal::Executor;
 using internal::SerialExecutor;
 
 namespace dataset {
+namespace {
+inline bool parseBool(const std::string& value) { return value == "true" ? true : false; }
+}  // namespace
 
 struct CsvInspectedFragment : public InspectedFragment {
   CsvInspectedFragment(std::vector<std::string> column_names,
@@ -501,6 +505,34 @@ Future<> CsvFileWriter::FinishInternal() {
   // The CSV writer's Close() is a no-op, so just treat it as synchronous
   RETURN_NOT_OK(batch_writer_->Close());
   return Status::OK();
+}
+
+Result<std::shared_ptr<FragmentScanOptions>> CsvFragmentScanOptions::from(
+    const std::unordered_map<std::string, std::string>& configs) {
+  std::shared_ptr<CsvFragmentScanOptions> options =
+      std::make_shared<CsvFragmentScanOptions>();
+  for (auto const& it : configs) {
+    auto& key = it.first;
+    auto& value = it.second;
+    if (key == "delimiter") {
+      options->parse_options.delimiter = value.data()[0];
+    } else if (key == "quoting") {
+      options->parse_options.quoting = parseBool(value);
+    } else if (key == "column_types") {
+      int64_t schema_address = std::stol(value);
+      ArrowSchema* cSchema = reinterpret_cast<ArrowSchema*>(schema_address);
+      ARROW_ASSIGN_OR_RAISE(auto schema, arrow::ImportSchema(cSchema));
+      auto& column_types = options->convert_options.column_types;
+      for (auto field : schema->fields()) {
+        column_types[field->name()] = field->type();
+      }
+    } else if (key == "strings_can_be_null") {
+      options->convert_options.strings_can_be_null = parseBool(value);
+    } else {
+      return Status::Invalid("Config " + it.first + "is not supported.");
+    }
+  }
+  return options;
 }
 
 }  // namespace dataset

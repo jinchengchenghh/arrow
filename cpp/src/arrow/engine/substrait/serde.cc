@@ -247,6 +247,16 @@ Result<BoundExpressions> DeserializeExpressions(
   return FromProto(extended_expression, ext_set_out, conversion_options, registry);
 }
 
+Status DeserializeMap(const Buffer& buf,
+                      std::unordered_map<std::string, std::string>& out) {
+  // ARROW_ASSIGN_OR_RAISE(auto advanced_extension,
+  //                       ParseFromBuffer<substrait::extensions::AdvancedExtension>(buf));
+  // return FromProto(advanced_extension, out);
+  ARROW_ASSIGN_OR_RAISE(auto literal,
+                        ParseFromBuffer<substrait::Expression::Literal>(buf));
+  return FromProto(literal, out);
+}
+
 namespace {
 
 Result<std::shared_ptr<acero::ExecPlan>> MakeSingleDeclarationPlan(

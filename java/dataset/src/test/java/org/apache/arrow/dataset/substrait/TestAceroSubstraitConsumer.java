@@ -31,6 +31,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
+import org.apache.arrow.c.ArrowSchema;
+import org.apache.arrow.c.CDataDictionaryProvider;
+import org.apache.arrow.c.Data;
 import org.apache.arrow.dataset.ParquetWriteSupport;
 import org.apache.arrow.dataset.TestDataset;
 import org.apache.arrow.dataset.file.FileFormat;
@@ -38,8 +41,11 @@ import org.apache.arrow.dataset.file.FileSystemDatasetFactory;
 import org.apache.arrow.dataset.jni.NativeMemoryPool;
 import org.apache.arrow.dataset.scanner.ScanOptions;
 import org.apache.arrow.dataset.scanner.Scanner;
+import org.apache.arrow.dataset.scanner.csv.CsvConvertOptions;
+import org.apache.arrow.dataset.scanner.csv.CsvFragmentScanOptions;
 import org.apache.arrow.dataset.source.Dataset;
 import org.apache.arrow.dataset.source.DatasetFactory;
+import org.apache.arrow.memory.BufferAllocator;
 import org.apache.arrow.vector.ipc.ArrowReader;
 import org.apache.arrow.vector.types.pojo.ArrowType;
 import org.apache.arrow.vector.types.pojo.Field;
@@ -48,6 +54,8 @@ import org.apache.arrow.vector.types.pojo.Schema;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+
+import com.google.common.collect.ImmutableMap;
 
 public class TestAceroSubstraitConsumer extends TestDataset {
 
@@ -456,5 +464,43 @@ public class TestAceroSubstraitConsumer extends TestDataset {
     ByteBuffer substraitExpression = ByteBuffer.allocateDirect(decodedSubstrait.length);
     substraitExpression.put(decodedSubstrait);
     return substraitExpression;
+  }
+
+  @Test
+  public void testCsvConvertOptions() throws Exception {
+    final Schema schema = new Schema(Arrays.asList(
+        Field.nullable("Id", new ArrowType.Int(32, true)),
+        Field.nullable("Name", new ArrowType.Utf8()),
+        Field.nullable("Language", new ArrowType.Utf8())
+    ), null);
+    String path = "file://" + getClass().getResource("/").getPath() + "/data/student.csv";
+    BufferAllocator allocator = rootAllocator();
+    try (ArrowSchema cSchema = ArrowSchema.allocateNew(allocator);
+         CDataDictionaryProvider provider = new CDataDictionaryProvider()) {
+      Data.exportSchema(allocator, schema, provider, cSchema);
+      CsvConvertOptions convertOptions = new CsvConvertOptions(ImmutableMap.of("delimiter", ";"));
+      convertOptions.setArrowSchema(cSchema);
+      CsvFragmentScanOptions fragmentScanOptions = new CsvFragmentScanOptions(
+          convertOptions, ImmutableMap.of(), ImmutableMap.of());
+      ScanOptions options = new ScanOptions.Builder(/*batchSize*/ 32768)
+          .columns(Optional.empty())
+          .fragmentScanOptions(fragmentScanOptions)
+          .build();
+      try (
+          DatasetFactory datasetFactory = new FileSystemDatasetFactory(allocator, NativeMemoryPool.getDefault(),
+              FileFormat.CSV, path);
+          Dataset dataset = datasetFactory.finish();
+          Scanner scanner = dataset.newScan(options);
+          ArrowReader reader = scanner.scanBatches()
+      ) {
+        assertEquals(schema.getFields(), reader.getVectorSchemaRoot().getSchema().getFields());
+        int rowCount = 0;
+        while (reader.loadNextBatch()) {
+          assertEquals("[1, 2, 3]", reader.getVectorSchemaRoot().getVector("Id").toString());
+          rowCount += reader.getVectorSchemaRoot().getRowCount();
+        }
+        assertEquals(3, rowCount);
+      }
+    }
   }
 }
